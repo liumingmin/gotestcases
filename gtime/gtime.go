@@ -62,7 +62,8 @@ func Now() time.Time {
 	t, nano := gtime, gnano
 	gmu.RUnlock()
 	if nano == 0 {
-		panic("time has not been synced")
+		//panic("time has not been synced")
+		return time.Now()
 	}
 	return t.Add(time.Duration(nanotime() - nano))
 }
@@ -73,7 +74,7 @@ func getNow(timeout time.Duration) (
 	deadline := time.Now().Add(timeout)
 	// connect to public google.com on port 80. This should resolve globally
 	// keeping the hops down regardless of where in the world we are.
-	c, err := net.DialTimeout("tcp", "google.com:80", timeout)
+	c, err := net.DialTimeout("tcp", "baidu.com:80", timeout)
 	if err != nil {
 		return time.Time{}, 0, err
 	}

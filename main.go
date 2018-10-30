@@ -55,13 +55,13 @@ import (
 	//"math"
 	"github.com/pkg/errors"
 
-	_ "awesomeProject/apackage"
+	_ "github.com/liumingmin/gotestcases/apackage"
 	//"strconv"
 	"net"
 	"strconv"
 	"math/rand"
 	"github.com/gin-gonic/gin"
-	"awesomeProject/gtime"
+	"github.com/liumingmin/gotestcases/gtime"
 )
 
 import "C"
@@ -211,15 +211,33 @@ func main(){
 	//testatomic()
 
 	//atomic.CompareAndSwapInt32()
+
+	testgtime()
 }
 
 func testgtime() {
-	gtime.Sync(time.Second)
-	t1 := Now()
-	t2 := Now()
+	fmt.Println(gtime.Now())
+	time.Sleep(time.Second)
+	fmt.Println(gtime.Now())
+	time.Sleep(time.Second)
+
+	gtime.Sync(time.Second*5)
+	t1 := time.Now()
+	t2 := time.Now()
 	if t1.After(t2) {
-		t.Fatalf("time out of order, %v > %v", t1, t2)
+		fmt.Println("time out of order, %v > %v", t1, t2)
 	}
+
+	for{
+		func (){
+			defer func() {recover()}()
+
+			fmt.Println(gtime.Now())
+		}()
+
+		time.Sleep(time.Second)
+	}
+
 }
 
 func ppprof(){
@@ -231,7 +249,7 @@ func ppprof(){
 
 	// automatically add routers for net/http/pprof
 	// e.g. /debug/pprof, /debug/pprof/heap, etc.
-	ginpprof.Wrap(router)
+	//ginpprof.Wrap(router)
 
 	// ginpprof also plays well with *gin.RouterGroup
 	// group := router.Group("/debug/pprof")
