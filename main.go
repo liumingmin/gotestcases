@@ -62,6 +62,9 @@ import (
 	"math/rand"
 	"github.com/gin-gonic/gin"
 	"github.com/liumingmin/gotestcases/gtime"
+	"github.com/liumingmin/lighttimer"
+	"woh/platform/common/util/safego"
+	"net/rpc"
 )
 
 import "C"
@@ -212,7 +215,149 @@ func main(){
 
 	//atomic.CompareAndSwapInt32()
 
-	testgtime()
+	//testgtime()
+
+	//testchanmap()
+
+
+	var respInfos []string
+	//result := AsyncInvokeWithTimeout(time.Second*1, func() {
+	//	time.Sleep(time.Second*2)
+	//	respInfos = []string{"we add1","we add2"}
+	//	fmt.Println("1done")
+	//},func() {
+	//	time.Sleep(time.Second*3)
+	//	//respInfos = append(respInfos,"we add3")
+	//	fmt.Println("2done")
+	//})
+	//
+	//fmt.Println("1alldone:",result)
+
+
+
+	//result2 := AsyncInvokesWithTimeout(time.Second*3,[]func(){func() {
+	//	time.Sleep(time.Second*1)
+	//	respInfos = []string{"we add1","we add2"}
+	//
+	//	//panic(nil)
+	//	fmt.Println("1done")
+	//},func() {
+	//	time.Sleep(time.Second*2)
+	//	respInfos = append(respInfos,"we add3")
+	//	//panic(nil)
+	//	fmt.Println("2done")
+	//
+	//}} )
+	//
+	//fmt.Println("2alldone:", result2)
+	//fmt.Println(respInfos)
+	//time.Sleep(time.Hour)
+	//
+	////fmt.Println(testretarray())
+	//var retstrs []string
+	//retstrs = append(retstrs,"testretstr")
+	//
+	//fmt.Println(retstrs)
+
+	//rpc.Call{}
+}
+
+
+
+
+func testchanmap(){
+	c := make(chan map[string]string)
+	go func() {
+		var roleInfo map[string]string
+		defer func() {
+			c <- roleInfo
+		}()
+		roleInfo = prodMap()
+	}()
+
+	fmt.Println(<-c)
+
+
+
+}
+
+
+func testretarray() (retstrs []string){
+	retstrs = append(retstrs,"testretstr")
+	return
+}
+
+func prodMap()map[string]string{
+	m:= make(map[string]string)
+	m["222"]="3333"
+	return m
+}
+
+func AsyncInvokesWithTimeout(timeout time.Duration, fs []func()) bool {
+	return AsyncInvokeWithTimeout(timeout, fs...)
+}
+
+func AsyncInvokeWithTimeout(timeout time.Duration,args ...func()) bool {
+	if len(args) == 0{
+		return false
+	}
+
+	wg :=&sync.WaitGroup{}
+
+	for _,arg := range args{
+		f := arg
+		wg.Add(1)
+		safego.Go( func() {
+			defer wg.Done()
+			f()
+		})
+	}
+
+	return waitInvokeTimeout(wg,timeout)
+}
+
+func waitInvokeTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	safego.Go(func() {
+		defer close(c)
+		wg.Wait()
+	})
+	select {
+	case <-c:
+		return true // completed normally
+	case <-time.After(timeout):
+		return false // timed out
+	}
+}
+
+
+func testcalltimeout(){
+	lighttimer.StartTicks(time.Millisecond)
+	c := make(chan string,1)
+	defer close(c)
+
+	go func() {
+		time.Sleep(time.Second*2)
+		select {
+		case c <- "111":
+		default:
+		}
+
+		fmt.Println("run 1 ...")
+	}()
+
+	lighttimer.AddCallback(time.Second*3, func() {
+		select {
+		case c <- "111":
+		default:
+		}
+
+		fmt.Println("run 2 ...")
+	})
+
+	<-c
+	fmt.Println("run end ...")
+
 }
 
 func testgtime() {
